@@ -1,0 +1,4 @@
+hello hadoop
+hello mapreduce
+hadoop counts words
+words words words

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  hdfs-site.xml : configuration du stockage distribué HDFS.
+-->
+<configuration>
+
+  <!--
+    Nombre de copies de chaque bloc. Par défaut 3 (tolérance aux pannes),
+    mais on n'a qu'un seul DataNode : on ne peut donc stocker qu'une copie.
+  -->
+  <property>
+    <name>dfs.replication</name>
+    <value>1</value>
+  </property>
+
+  <!--
+    Désactive les contrôles de droits Unix sur HDFS.
+    Pratique en local pour éviter les "Permission denied" ; à ne JAMAIS faire en prod.
+  -->
+  <property>
+    <name>dfs.permissions.enabled</name>
+    <value>false</value>
+  </property>
+
+</configuration>

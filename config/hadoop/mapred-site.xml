@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  mapred-site.xml : configuration de MapReduce.
+-->
+<configuration>
+
+  <!--
+    Les jobs MapReduce sont exécutés par YARN (le cluster),
+    et non en mode "local" dans un seul processus Java.
+  -->
+  <property>
+    <name>mapreduce.framework.name</name>
+    <value>yarn</value>
+  </property>
+
+  <!--
+    Les 3 réglages suivants indiquent où est installé Hadoop aux processus
+    lancés par YARN (ApplicationMaster, tâches map, tâches reduce).
+    Sans eux, Hadoop 3 échoue avec :
+      "Could not find or load main class org.apache.hadoop.mapreduce.v2.app.MRAppMaster"
+  -->
+  <property>
+    <name>yarn.app.mapreduce.am.env</name>
+    <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+  </property>
+  <property>
+    <name>mapreduce.map.env</name>
+    <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+  </property>
+  <property>
+    <name>mapreduce.reduce.env</name>
+    <value>HADOOP_MAPRED_HOME=/opt/hadoop</value>
+  </property>
+
+</configuration>

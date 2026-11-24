@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  yarn-site.xml : configuration de YARN (gestionnaire de ressources du cluster).
+-->
+<configuration>
+
+  <!-- Où trouver le ResourceManager (nom du conteneur dans le réseau Docker). -->
+  <property>
+    <name>yarn.resourcemanager.hostname</name>
+    <value>resourcemanager</value>
+  </property>
+
+  <!--
+    Active le service de SHUFFLE sur le NodeManager.
+    C'est lui qui transfère la sortie des maps vers les reducers
+    (l'étape "shuffle & sort" entre map et reduce). Indispensable.
+  -->
+  <property>
+    <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+  </property>
+
+  <!-- Mémoire que le NodeManager peut distribuer aux tâches (en Mo). -->
+  <property>
+    <name>yarn.nodemanager.resource.memory-mb</name>
+    <value>4096</value>
+  </property>
+
+  <!-- Plus petit "conteneur" que YARN peut allouer à une tâche (en Mo). -->
+  <property>
+    <name>yarn.scheduler.minimum-allocation-mb</name>
+    <value>512</value>
+  </property>
+
+  <!--
+    Désactive le contrôle de mémoire virtuelle : dans Docker il est souvent
+    trop strict et tue les tâches sans raison valable.
+  -->
+  <property>
+    <name>yarn.nodemanager.vmem-check-enabled</name>
+    <value>false</value>
+  </property>
+
+</configuration>

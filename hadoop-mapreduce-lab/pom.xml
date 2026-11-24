@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  pom.xml : la "recette" Maven du projet.
+  Il décrit : les dépendances (Hadoop), la version de Java, et comment
+  fabriquer le .jar qu'on soumettra au cluster.
+
+  Compiler :  mvn clean package
+  Résultat :  target/wordcount.jar   (visible dans les conteneurs sous /jobs)
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Identité du projet (groupe / nom / version) -->
+  <groupId>com.wordcount</groupId>
+  <artifactId>hadoop-mapreduce-lab</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <!--
+      IMPORTANT : l'image apache/hadoop:3.4.1 exécute Java 8.
+      On compile donc pour Java 8, même si ton JDK local est un Java 21.
+      Sinon : "UnsupportedClassVersionError" au lancement du job.
+    -->
+    <maven.compiler.release>8</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Même version que le cluster, pour éviter toute incompatibilité d'API. -->
+    <hadoop.version>3.4.1</hadoop.version>
+  </properties>
+
+  <dependencies>
+    <!--
+      hadoop-client contient l'API MapReduce (Mapper, Reducer, Job...) et HDFS.
+      scope "provided" = nécessaire pour COMPILER, mais pas embarqué dans le .jar :
+      le cluster fournit déjà ces classes à l'exécution. Le .jar reste minuscule.
+    -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <version>${hadoop.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <!-- Nom fixe du .jar : target/wordcount.jar (au lieu de hadoop-mapreduce-lab-1.0.0.jar) -->
+    <finalName>wordcount</finalName>
+
+    <plugins>
+      <!--
+        Le plugin jar écrit "Main-Class" dans le manifeste du .jar.
+        On peut alors lancer :  hadoop jar wordcount.jar <entrée> <sortie>
+        sans préciser le nom complet de la classe principale.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.wordcount.WordCountDriver</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

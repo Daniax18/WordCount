@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  core-site.xml : configuration commune à TOUS les composants Hadoop.
+  Le paramètre essentiel : où se trouve le système de fichiers par défaut.
+-->
+<configuration>
+
+  <!--
+    Adresse de HDFS. Grâce à ce réglage, un chemin comme "/user/hadoop/input"
+    est automatiquement compris comme "hdfs://namenode:9000/user/hadoop/input".
+    "namenode" = nom du conteneur dans le réseau Docker.
+  -->
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://namenode:9000</value>
+  </property>
+
+</configuration>

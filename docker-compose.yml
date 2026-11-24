@@ -1,0 +1,102 @@
+# =====================================================================
+# Mini-cluster Hadoop 3.4.1 (1 machine "simulée" par conteneur)
+#
+#   HDFS  (stockage distribué)       : namenode + datanode
+#   YARN  (gestion des ressources)   : resourcemanager + nodemanager
+#
+# Démarrer :  docker compose up -d
+# Arrêter  :  docker compose down        (ajoute -v pour tout effacer)
+#
+# Interfaces web une fois démarré :
+#   - HDFS (NameNode)          http://localhost:9870
+#   - YARN (ResourceManager)   http://localhost:8088   <- suivi des jobs
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Bloc commun réutilisé par les 4 services (ancre YAML "&hadoop-common").
+# Chaque service fait "<<: *hadoop-common" pour en hériter.
+# ---------------------------------------------------------------------
+x-hadoop-common: &hadoop-common
+  image: apache/hadoop:3.4.1
+  networks:
+    - hadoop
+  volumes:
+    # Nos fichiers de configuration Hadoop remplacent ceux de l'image.
+    # ":ro" = lecture seule, le conteneur ne peut pas les modifier.
+    - ./config/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+    - ./config/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    - ./config/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml:ro
+    - ./config/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml:ro
+    # Dossier "data" du projet visible dans le conteneur sous /data
+    # (fichiers texte à compter, et résultats rapatriés depuis HDFS).
+    - ./data:/data
+    # Le .jar compilé par Maven en local apparaît dans /jobs :
+    # pas besoin de le copier à la main après chaque "mvn package".
+    - ./hadoop-mapreduce-lab/target:/jobs
+
+services:
+
+  # -------------------------------------------------------------------
+  # NameNode : le "chef" de HDFS. Il ne stocke pas les données,
+  # seulement l'annuaire : quel fichier -> quels blocs -> quel DataNode.
+  # -------------------------------------------------------------------
+  namenode:
+    <<: *hadoop-common
+    container_name: namenode
+    hostname: namenode
+    command: ["hdfs", "namenode"]
+    environment:
+      # Au premier démarrage, le script de l'image formate HDFS
+      # (équivalent de "hdfs namenode -format") si ce dossier n'existe pas.
+      ENSURE_NAMENODE_DIR: /tmp/hadoop-hadoop/dfs/name
+    ports:
+      - "9870:9870"   # interface web HDFS
+      - "9000:9000"   # port RPC de HDFS (fs.defaultFS)
+
+  # -------------------------------------------------------------------
+  # DataNode : stocke réellement les blocs des fichiers HDFS.
+  # Dans un vrai cluster il y en a des dizaines ; ici un seul suffit.
+  # -------------------------------------------------------------------
+  datanode:
+    <<: *hadoop-common
+    container_name: datanode
+    hostname: datanode
+    command: ["hdfs", "datanode"]
+    depends_on:
+      - namenode
+    ports:
+      - "9864:9864"   # interface web du DataNode
+
+  # -------------------------------------------------------------------
+  # ResourceManager : le "chef" de YARN. Il reçoit les jobs
+  # (hadoop jar ...) et distribue les tâches map/reduce aux NodeManagers.
+  # -------------------------------------------------------------------
+  resourcemanager:
+    <<: *hadoop-common
+    container_name: resourcemanager
+    hostname: resourcemanager
+    command: ["yarn", "resourcemanager"]
+    depends_on:
+      - namenode
+    ports:
+      - "8088:8088"   # interface web YARN (liste des jobs, logs...)
+
+  # -------------------------------------------------------------------
+  # NodeManager : l'"ouvrier" de YARN. Il lance les conteneurs
+  # dans lesquels s'exécutent nos Mapper et Reducer.
+  # -------------------------------------------------------------------
+  nodemanager:
+    <<: *hadoop-common
+    container_name: nodemanager
+    hostname: nodemanager
+    command: ["yarn", "nodemanager"]
+    depends_on:
+      - resourcemanager
+      - datanode
+    ports:
+      - "8042:8042"   # interface web du NodeManager
+
+# Réseau privé : les conteneurs se trouvent par leur nom (ex. "namenode").
+networks:
+  hadoop:
+    name: hadoop
