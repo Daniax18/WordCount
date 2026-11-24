@@ -49,7 +49,65 @@ mvn -f hadoop-mapreduce-lab/pom.xml clean package
 
 ## Lancer le job
 
-Voir l'étape 2 (le job sera complété et les commandes ajoutées ici).
+Toutes les commandes Hadoop s'exécutent **dans** le conteneur `namenode`
+(c'est lui qui joue le rôle de "client" du cluster).
+
+1. Copier le texte du disque local vers HDFS (`/data` = le dossier `data/` du projet) :
+
+```powershell
+docker exec namenode hdfs dfs -mkdir -p /user/hadoop/input
+```
+
+```powershell
+docker exec namenode hdfs dfs -put -f /data/input/sample.txt /user/hadoop/input/
+```
+
+2. Lancer le job (le dossier de sortie ne doit pas exister, on le supprime s'il y en a un) :
+
+```powershell
+docker exec namenode hdfs dfs -rm -r -f /user/hadoop/output
+```
+
+```powershell
+docker exec namenode hadoop jar /jobs/wordcount.jar /user/hadoop/input /user/hadoop/output
+```
+
+Pendant l'exécution, le job est visible sur http://localhost:8088.
+
+3. Lire le résultat :
+
+```powershell
+docker exec namenode hdfs dfs -cat /user/hadoop/output/part-r-00000
+```
+
+```
+counts	1
+hadoop	2
+hello	2
+mapreduce	1
+words	4
+```
+
+Le dossier de sortie contient `_SUCCESS` (fichier vide = le job a réussi) et
+un fichier `part-r-NNNNN` par reducer (ici un seul).
+
+4. (Optionnel) Rapatrier le résultat dans `data/output/` sur ton PC :
+
+```powershell
+docker exec namenode hdfs dfs -getmerge /user/hadoop/output /data/output/wordcount.txt
+```
+
+## Ce qui se passe pendant le job
+
+```
+sample.txt ──► MAP (WordCountMapper)    "hello hadoop" ──► (hello,1) (hadoop,1)
+           ──► SHUFFLE & SORT (Hadoop)  regroupe par mot ──► (hello,[1,1])
+           ──► REDUCE (WordCountReducer) additionne      ──► (hello,2)
+           ──► part-r-00000 dans HDFS
+```
+
+Pour compter d'autres textes : dépose des `.txt` dans `data/input/`,
+envoie-les avec `hdfs dfs -put`, puis relance le job.
 
 ## Arrêter le cluster
 
