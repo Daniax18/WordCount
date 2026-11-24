@@ -3,11 +3,15 @@
 Compter les mots d'un ou plusieurs fichiers texte avec un job MapReduce
 exécuté sur un mini-cluster Hadoop dans Docker.
 
+> Explication complète (rôle de chaque composant, chaque config, déroulé
+> détaillé d'un job) : [docs/WORKFLOW.md](docs/WORKFLOW.md)
+
 ## Structure du projet
 
 ```
 WordCount/
 ├── docker-compose.yml          # Le cluster : namenode, datanode, resourcemanager, nodemanager
+├── docs/WORKFLOW.md            # Workflow détaillé du projet
 ├── config/hadoop/              # Config Hadoop montée dans chaque conteneur
 │   ├── core-site.xml           #   adresse de HDFS
 │   ├── hdfs-site.xml           #   réplication = 1
